@@ -7,11 +7,11 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-os_pipe = "0.8"
-tempfile = "3.1"
-structopt = "0.2"
-wayland-client = "0.23"
 anyhow = "1.0"
+os_pipe = "0.9"
+structopt = "0.2"
+tempfile = "3.1"
+wayland-client = "0.25"
 
 [dev-dependencies]
 rand = "0.7"
