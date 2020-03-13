@@ -11,7 +11,11 @@ anyhow = "1.0"
 os_pipe = "0.9"
 structopt = "0.2"
 tempfile = "3.1"
-wayland-client = "0.25"
+wayland-client = "0.25.0"
+
+[dependencies.wayland-protocols]
+features = ["client"]
+version = "0.25.0"
 
 [dev-dependencies]
 rand = "0.7"

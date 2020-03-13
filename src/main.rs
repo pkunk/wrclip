@@ -7,13 +7,13 @@ use wrclip::copy;
 use wrclip::paste;
 
 #[derive(Debug, StructOpt)]
-///	wrclip i <mime_types>
-///	Copy stdin into clipboard(input) with the MIME types
-///	given as a space separated list
-///	wrclip o <mime_types>
-///	Paste clipboard to stdout(output), trying each MIME type in
-///	the order given until a match is found
-///	If no MIME type is provided, the program will default to text
+/// wrclip i <mime_types>
+/// Copy stdin into clipboard(input) with the MIME types
+/// given as a space separated list
+/// wrclip o <mime_types>
+/// Paste clipboard to stdout(output), trying each MIME type in
+/// the order given until a match is found
+/// If no MIME type is provided, the program will default to text
 enum Cli {
     #[structopt(name = "i")]
     Input { mimes: Vec<String> },

@@ -2,6 +2,8 @@ extern crate anyhow;
 extern crate tempfile;
 extern crate wayland_client;
 
+use std::any::Any;
+use std::cell::Cell;
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
 use std::os::unix::io::AsRawFd;
@@ -13,17 +15,18 @@ use std::time::Duration;
 use std::{io, thread};
 
 use os_pipe::{PipeReader, PipeWriter};
-use std::cell::Cell;
+
 use wayland_client::protocol::{
-    wl_compositor, wl_data_device_manager, wl_data_offer, wl_seat, wl_shell, wl_shm, wl_surface,
+    wl_compositor, wl_data_device_manager, wl_data_offer, wl_seat, wl_shm,
 };
-use wayland_client::{Display, GlobalManager, Main};
+use wayland_client::{Display, GlobalManager};
+use wayland_protocols::xdg_shell::client::xdg_wm_base;
 
 pub fn copy(mimes: Vec<String>) -> anyhow::Result<()> {
     let display = Display::connect_to_env()?;
     let mut event_queue = display.create_event_queue();
-    let attached_display = (*display).clone().attach(event_queue.token());
-    let globals = GlobalManager::new(&attached_display);
+    let display = (*display).clone().attach(event_queue.token());
+    let globals = GlobalManager::new(&display);
 
     // roundtrip to retrieve the globals list
     event_queue.sync_roundtrip(&mut (), |_, _, _| {})?;
@@ -53,7 +56,11 @@ pub fn copy(mimes: Vec<String>) -> anyhow::Result<()> {
         }
     });
 
-    let _surface = create_wl_surface(&globals)?;
+    let _surface = create_xdg_surface(&globals)?;
+
+    event_queue.sync_roundtrip(&mut (), |_, _, _| {})?;
+
+    // thread::sleep(Duration::from_millis(50));
 
     for mime in mimes {
         data_source.offer(mime.clone());
@@ -62,25 +69,18 @@ pub fn copy(mimes: Vec<String>) -> anyhow::Result<()> {
     data_device.set_selection(Some(&data_source), 0);
 
     event_queue.sync_roundtrip(&mut (), |_, _, _| {})?;
+    event_queue.sync_roundtrip(&mut (), |_, _, _| {})?;
 
-    while event_queue.dispatch(&mut (), |_, _, _| {}).is_ok() {
-        thread::sleep(Duration::from_millis(10));
-    }
     Ok(())
 }
 
 pub fn paste(mimes: Vec<String>) -> anyhow::Result<()> {
     let display = Display::connect_to_env()?;
     let mut event_queue = display.create_event_queue();
-    let attached_display = (*display).clone().attach(event_queue.token());
-    let globals = GlobalManager::new(&attached_display);
+    let display = (*display).clone().attach(event_queue.token());
+    let globals = GlobalManager::new(&display);
 
-    // roundtrip to retrieve the globals list
     event_queue.sync_roundtrip(&mut (), |_, _, _| {})?;
-
-    //    for (id, interface, version) in globals.list() {
-    //        println!("{}: {} (version {})", id, interface, version);
-    //    }
 
     let data_device_manager =
         globals.instantiate_exact::<wl_data_device_manager::WlDataDeviceManager>(3)?;
@@ -138,11 +138,10 @@ pub fn paste(mimes: Vec<String>) -> anyhow::Result<()> {
         }
     });
 
-    let _surface = create_wl_surface(&globals)?;
+    let _surface = create_xdg_surface(&globals)?;
 
-    event_queue.sync_roundtrip(&mut (), |_, _, _| {})?;
-
-    while if event_queue.dispatch(&mut (), |_, _, _| {}).is_ok() {
+    #[allow(clippy::block_in_if_condition_stmt)]
+    while if event_queue.sync_roundtrip(&mut (), |_, _, _| {}).is_ok() {
         let wait: bool = match rx.try_recv() {
             Ok(_) => false,
             Err(TryRecvError::Empty) => true,
@@ -168,7 +167,7 @@ fn do_receive(
     io::copy(&mut reader, &mut io::stdout())
 }
 
-fn create_wl_surface(globals: &GlobalManager) -> anyhow::Result<Main<wl_surface::WlSurface>> {
+fn create_xdg_surface(globals: &GlobalManager) -> anyhow::Result<Box<dyn Any>> {
     let buf_x: u32 = 1;
     let buf_y: u32 = 1;
     let mut tmp = tempfile::tempfile()?;
@@ -180,7 +179,7 @@ fn create_wl_surface(globals: &GlobalManager) -> anyhow::Result<Main<wl_surface:
     let compositor = globals.instantiate_exact::<wl_compositor::WlCompositor>(1)?;
     let surface = compositor.create_surface();
 
-    let shm = globals.instantiate_exact::<wl_shm::WlShm>(1).unwrap();
+    let shm = globals.instantiate_exact::<wl_shm::WlShm>(1)?;
     let pool = shm.create_pool(
         tmp.as_raw_fd(),
         (buf_x * buf_y * 4) as i32, // size in bytes of the shared memory (4 bytes per pixel)
@@ -193,19 +192,11 @@ fn create_wl_surface(globals: &GlobalManager) -> anyhow::Result<Main<wl_surface:
         wl_shm::Format::Argb8888, // chosen encoding for the data
     );
 
-    let shell = globals.instantiate_exact::<wl_shell::WlShell>(1)?;
-    let shell_surface = shell.get_shell_surface(&surface);
-    shell_surface.quick_assign(|shell_surface, event, _| {
-        use wayland_client::protocol::wl_shell_surface::Event;
-        // This ping/pong mechanism is used by the wayland server to detect
-        // unresponsive applications
-        if let Event::Ping { serial } = event {
-            shell_surface.pong(serial);
-        }
-    });
+    let shell = globals.instantiate_exact::<xdg_wm_base::XdgWmBase>(3)?;
+    let shell_surface = shell.get_xdg_surface(&surface);
+    let shell_surface = shell_surface.get_toplevel();
 
-    shell_surface.set_toplevel();
     surface.attach(Some(&buffer), 0, 0);
     surface.commit();
-    Ok(surface)
+    Ok(Box::new(shell_surface))
 }

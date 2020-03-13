@@ -9,7 +9,7 @@ use std::time::Duration;
 
 #[test]
 fn simple_copy_paste() {
-    let program = "target/debug/wrclip";
+    let program = "target/release/wrclip";
 
     let rand_string: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
