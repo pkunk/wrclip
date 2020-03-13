@@ -1,7 +1,3 @@
-extern crate anyhow;
-extern crate tempfile;
-extern crate wayland_client;
-
 use std::any::Any;
 use std::cell::Cell;
 use std::fs::File;

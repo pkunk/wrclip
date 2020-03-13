@@ -1,6 +1,3 @@
-extern crate anyhow;
-extern crate structopt;
-
 use structopt::StructOpt;
 
 use wrclip::copy;
