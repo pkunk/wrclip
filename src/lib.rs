@@ -66,9 +66,10 @@ pub fn copy(mimes: Vec<String>) -> anyhow::Result<()> {
         data_source.offer(mime.clone());
     }
 
+    event_queue.sync_roundtrip(&mut (), |_, _, _| {})?;
+
     data_device.set_selection(Some(&data_source), 0);
 
-    event_queue.sync_roundtrip(&mut (), |_, _, _| {})?;
     event_queue.sync_roundtrip(&mut (), |_, _, _| {})?;
 
     Ok(())
