@@ -97,7 +97,7 @@ pub fn paste(mimes: Vec<String>) -> Result<(), Box<dyn Error>> {
         let best_index = Rc::clone(&best_index);
         match event {
             #[allow(unused_variables)]
-            Event::DataOffer { id } => id.quick_assign(move |_, event, _| {
+            Event::DataOffer { id } => id.quick_assign(move |_data_offer, event, _| {
                 use wayland_client::protocol::wl_data_offer::Event;
                 #[allow(clippy::single_match)]
                 match event {
