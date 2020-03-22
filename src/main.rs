@@ -1,5 +1,6 @@
 use structopt::StructOpt;
 
+use std::error::Error;
 use wrclip::copy;
 use wrclip::paste;
 
@@ -18,7 +19,7 @@ enum Cli {
     Output { mimes: Vec<String> },
 }
 
-fn main() -> anyhow::Result<()> {
+fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::from_args();
     match cli {
         Cli::Input { mimes } => copy(get_mimes(mimes)),

@@ -12,13 +12,14 @@ use std::{io, thread};
 
 use os_pipe::{PipeReader, PipeWriter};
 
+use std::error::Error;
 use wayland_client::protocol::{
     wl_compositor, wl_data_device_manager, wl_data_offer, wl_seat, wl_shm,
 };
 use wayland_client::{Display, GlobalManager};
 use wayland_protocols::xdg_shell::client::xdg_wm_base;
 
-pub fn copy(mimes: Vec<String>) -> anyhow::Result<()> {
+pub fn copy(mimes: Vec<String>) -> Result<(), Box<dyn Error>> {
     let display = Display::connect_to_env()?;
     let mut event_queue = display.create_event_queue();
     let display = (*display).clone().attach(event_queue.token());
@@ -71,7 +72,7 @@ pub fn copy(mimes: Vec<String>) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn paste(mimes: Vec<String>) -> anyhow::Result<()> {
+pub fn paste(mimes: Vec<String>) -> Result<(), Box<dyn Error>> {
     let display = Display::connect_to_env()?;
     let mut event_queue = display.create_event_queue();
     let display = (*display).clone().attach(event_queue.token());
@@ -164,7 +165,7 @@ fn do_receive(
     io::copy(&mut reader, &mut io::stdout())
 }
 
-fn create_xdg_surface(globals: &GlobalManager) -> anyhow::Result<Box<dyn Any>> {
+fn create_xdg_surface(globals: &GlobalManager) -> Result<Box<dyn Any>, Box<dyn Error>> {
     let buf_x: u32 = 1;
     let buf_y: u32 = 1;
     let mut tmp = tempfile::tempfile()?;
