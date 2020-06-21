@@ -5,11 +5,11 @@ use std::io::{Seek, SeekFrom, Write};
 use std::os::unix::io::AsRawFd;
 use std::os::unix::io::FromRawFd;
 use std::rc::Rc;
-use std::sync::mpsc;
-use std::sync::mpsc::TryRecvError;
 use std::time::Duration;
 use std::{io, thread};
 
+use crossbeam_channel;
+use crossbeam_channel::TryRecvError;
 use os_pipe::{PipeReader, PipeWriter};
 
 use std::error::Error;
@@ -85,7 +85,7 @@ pub fn paste(mimes: Vec<String>) -> Result<(), Box<dyn Error>> {
 
     let seat = globals.instantiate_exact::<wl_seat::WlSeat>(5)?;
 
-    let (tx, rx) = mpsc::channel();
+    let (sender, receiver) = crossbeam_channel::bounded::<()>(0);
 
     let best_index = Rc::new(Cell::new(Option::None));
 
@@ -121,14 +121,14 @@ pub fn paste(mimes: Vec<String>) -> Result<(), Box<dyn Error>> {
                     let best_index = best_index.get();
                     if let Some(best_index) = best_index {
                         let mime = mimes[best_index].clone();
-                        let tx = tx.clone();
+                        let sender_inner = sender.clone();
                         thread::spawn(move || {
                             let (reader, writer) = os_pipe::pipe().unwrap();
                             let _ = do_receive(&offer, mime, reader, writer);
-                            tx.send(()).unwrap();
+                            sender_inner.send(()).unwrap();
                         });
                     } else {
-                        tx.send(()).unwrap();
+                        sender.send(()).unwrap();
                     }
                 }
             }
@@ -140,7 +140,7 @@ pub fn paste(mimes: Vec<String>) -> Result<(), Box<dyn Error>> {
 
     #[allow(clippy::block_in_if_condition_stmt)]
     while if event_queue.sync_roundtrip(&mut (), |_, _, _| {}).is_ok() {
-        let wait: bool = match rx.try_recv() {
+        let wait: bool = match receiver.try_recv() {
             Ok(_) => false,
             Err(TryRecvError::Empty) => true,
             Err(TryRecvError::Disconnected) => false,
@@ -151,6 +151,7 @@ pub fn paste(mimes: Vec<String>) -> Result<(), Box<dyn Error>> {
     } {
         thread::sleep(Duration::from_millis(10));
     }
+
     Ok(())
 }
 
