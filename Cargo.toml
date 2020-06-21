@@ -8,8 +8,8 @@ edition = "2018"
 
 [dependencies]
 crossbeam-channel = "0.4"
+gumdrop = "0.8"
 os_pipe = "0.9"
-structopt = "0.2"
 tempfile = "3.1"
 wayland-client = "0.25.0"
 
