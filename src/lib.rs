@@ -1,5 +1,6 @@
 use std::any::Any;
 use std::cell::Cell;
+use std::error::Error;
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
 use std::os::unix::io::AsRawFd;
@@ -9,10 +10,8 @@ use std::time::Duration;
 use std::{io, thread};
 
 use crossbeam_channel;
-use crossbeam_channel::TryRecvError;
+use crossbeam_channel::select;
 use os_pipe::{PipeReader, PipeWriter};
-
-use std::error::Error;
 use wayland_client::protocol::{
     wl_compositor, wl_data_device_manager, wl_data_offer, wl_seat, wl_shm,
 };
@@ -138,18 +137,11 @@ pub fn paste(mimes: Vec<String>) -> Result<(), Box<dyn Error>> {
 
     let _surface = create_xdg_surface(&globals)?;
 
-    #[allow(clippy::block_in_if_condition_stmt)]
-    while if event_queue.sync_roundtrip(&mut (), |_, _, _| {}).is_ok() {
-        let wait: bool = match receiver.try_recv() {
-            Ok(_) => false,
-            Err(TryRecvError::Empty) => true,
-            Err(TryRecvError::Disconnected) => false,
-        };
-        wait
-    } else {
-        false
-    } {
-        thread::sleep(Duration::from_millis(10));
+    while event_queue.sync_roundtrip(&mut (), |_, _, _| {}).is_ok() {
+        select! {
+            recv(receiver) -> _ => break,
+            default(Duration::from_millis(10)) => continue,
+        }
     }
 
     Ok(())
