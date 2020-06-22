@@ -11,11 +11,11 @@ crossbeam-channel = "0.4"
 gumdrop = "0.8"
 os_pipe = "0.9"
 tempfile = "3.1"
-wayland-client = "0.25.0"
+wayland-client = "0.26"
 
 [dependencies.wayland-protocols]
 features = ["client"]
-version = "0.25.0"
+version = "0.26"
 
 [dev-dependencies]
 rand = "0.7"
