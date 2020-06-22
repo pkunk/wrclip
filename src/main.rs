@@ -4,24 +4,12 @@ use std::error::Error;
 use wrclip::copy;
 use wrclip::paste;
 
-
 #[allow(non_camel_case_types)]
 #[derive(Debug, Options)]
-/// wrclip i <mime_types>
-/// Copy stdin into clipboard(input) with the MIME types
-/// given as a space separated list
-/// wrclip o <mime_types>
-/// Paste clipboard to stdout(output), trying each MIME type in
-/// the order given until a match is found
-/// If no MIME type is provided, the program will default to text
+/// Access an wayland compositor clipboard for reading or writing.
 struct MyOptions {
-    // Options here can be accepted with any command (or none at all),
-    // but they must come before the command name.
     #[options(help = "print help message")]
     help: bool,
-
-    // The `command` option will delegate option parsing to the command type,
-    // starting at the first free argument.
     #[options(command)]
     command: Option<Command>,
 }
@@ -29,9 +17,14 @@ struct MyOptions {
 #[allow(non_camel_case_types)]
 #[derive(Debug, Options)]
 enum Command {
-    #[options(help = "read")]
+    #[options(
+        help = "Copy stdin into clipboard(input) with the MIME types given as a space separated list"
+    )]
     i(MimeOpts),
-    #[options(help = "write")]
+    #[options(
+        help = "Paste clipboard to stdout(output), trying each MIME type in the order given until a match is found. \
+        If no MIME type is provided, the program will default to text"
+    )]
     o(MimeOpts),
 }
 
@@ -46,8 +39,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     if let Some(command) = opts.command {
         match command {
-            Command::i(MimeOpts{mimes}) => copy(get_mimes(mimes)),
-            Command::o(MimeOpts{mimes}) => paste(get_mimes(mimes)),
+            Command::i(MimeOpts { mimes }) => copy(get_mimes(mimes)),
+            Command::o(MimeOpts { mimes }) => paste(get_mimes(mimes)),
         }?;
     }
 
