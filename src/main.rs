@@ -6,7 +6,7 @@ use wrclip::paste;
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Options)]
-/// Access an wayland compositor clipboard for reading or writing.
+/// Access a wayland compositor clipboard for reading or writing.
 struct MyOptions {
     #[options(help = "print help message")]
     help: bool,
