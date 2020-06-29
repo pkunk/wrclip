@@ -163,9 +163,9 @@ fn create_xdg_surface(globals: &GlobalManager) -> Result<Box<dyn Any>, Box<dyn E
     let buf_y: u32 = 1;
     let mut tmp = tempfile::tempfile()?;
     for _ in 0..(buf_x * buf_y * 4) {
-        let _ = tmp.write_all(&[0x00]);
+        tmp.write_all(&[0x00])?;
     }
-    let _ = tmp.flush();
+    tmp.flush()?;
 
     let compositor = globals.instantiate_exact::<wl_compositor::WlCompositor>(1)?;
     let surface = compositor.create_surface();
