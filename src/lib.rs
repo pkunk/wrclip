@@ -9,7 +9,6 @@ use std::rc::Rc;
 use std::time::Duration;
 use std::{io, thread};
 
-use crossbeam_channel;
 use crossbeam_channel::select;
 use os_pipe::{PipeReader, PipeWriter};
 use wayland_client::protocol::{
@@ -95,7 +94,6 @@ pub fn paste(mimes: Vec<String>) -> Result<(), Box<dyn Error>> {
         let mimes = Rc::clone(&mimes);
         let best_index = Rc::clone(&best_index);
         match event {
-            #[allow(unused_variables)]
             Event::DataOffer { id } => id.quick_assign(move |_data_offer, event, _| {
                 use wayland_client::protocol::wl_data_offer::Event;
                 #[allow(clippy::single_match)]
