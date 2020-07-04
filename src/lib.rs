@@ -182,6 +182,13 @@ fn create_xdg_surface(globals: &GlobalManager) -> Result<Box<dyn Any>, Box<dyn E
     );
 
     let shell = globals.instantiate_exact::<xdg_wm_base::XdgWmBase>(3)?;
+    shell.quick_assign(|shell, event, _| {
+        use xdg_wm_base::Event;
+        if let Event::Ping { serial } = event {
+            shell.pong(serial);
+        }
+    });
+
     let shell_surface = shell.get_xdg_surface(&surface);
     let shell_surface = shell_surface.get_toplevel();
 
