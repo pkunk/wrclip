@@ -83,7 +83,7 @@ pub fn paste(mimes: Vec<String>) -> Result<(), Box<dyn Error>> {
 
     let seat = globals.instantiate_exact::<wl_seat::WlSeat>(5)?;
 
-    let (sender, receiver) = crossbeam_channel::bounded::<()>(0);
+    let (sender, receiver) = crossbeam_channel::bounded::<()>(1);
 
     let best_index = Rc::new(Cell::new(Option::None));
 
