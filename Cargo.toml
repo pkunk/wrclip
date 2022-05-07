@@ -2,17 +2,17 @@
 name = "wrclip"
 version = "0.1.0"
 authors = ["pkunk <pkunk.ab@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 crossbeam-channel = "0.5"
 gumdrop = "0.8"
-os_pipe = "0.9"
+os_pipe = "1.0"
 tempfile = "3.1"
-wayland-client = "0.28"
-wayland-protocols = {version = "0.28", features = ["client"]}
+wayland-client = "0.29"
+wayland-protocols = {version = "0.29", features = ["client"]}
 
 [dev-dependencies]
 rand = "0.8"
